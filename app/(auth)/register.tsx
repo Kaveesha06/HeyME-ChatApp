@@ -8,7 +8,7 @@ import { verticalScale } from "@/utils/styling";
 import { useRouter } from "expo-router";
 import * as Icons from 'phosphor-react-native';
 import React, { useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 const Register = ()=> {
 
@@ -18,9 +18,15 @@ const Register = ()=> {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter()
 
-    const handleSubmit = async()=>{
+    const handleSubmit = async () => {
+        if (!emailRef.current || !passwordRef.current || !nameRef.current){
+            Alert.alert('Sign Up', "Please fill all the fields");
+            return;
+        }
 
-    }
+        Alert.alert('Sign Up', "Account created successfully");
+        //Good to go
+    };
 
     return(
         <KeyboardAvoidingView 
@@ -50,9 +56,9 @@ const Register = ()=> {
                             </View>
                             <Input
                                 placeholder="Enter Your Name"
-                                onChangeText={(value: string)=> (nameRef.current, value)}
+                                onChangeText={(value: string) => (nameRef.current, value)}
                                 icon={
-                                    <Icons.User 
+                                    <Icons.UserIcon 
                                         size={verticalScale(26)} 
                                         color={colors.neutral600} 
                                     />
@@ -85,6 +91,14 @@ const Register = ()=> {
                                          Sign Up 
                                     </Typo>
                                 </Button>
+                                <View style={styles.footer}>
+                                    <Typo>Already have an account?</Typo>
+                                    <Pressable onPress={()=> router.push("/(auth)/login")}>
+                                        <Typo fontWeight={"bold"} color={colors.primaryDark}>
+                                            Login
+                                        </Typo>
+                                    </Pressable>
+                                </View>
                             </View>
 
                         </ScrollView>
