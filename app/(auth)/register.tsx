@@ -19,7 +19,12 @@ const Register = ()=> {
     const router = useRouter()
 
     const handleSubmit = async () => {
-        if (!emailRef.current || !passwordRef.current || !nameRef.current){
+        // Use trimmed values to avoid accepting only whitespace
+        const name = String(nameRef.current || "").trim();
+        const email = String(emailRef.current || "").trim();
+        const password = String(passwordRef.current || "").trim();
+
+        if (!name || !email || !password) {
             Alert.alert('Sign Up', "Please fill all the fields");
             return;
         }
@@ -56,7 +61,7 @@ const Register = ()=> {
                             </View>
                             <Input
                                 placeholder="Enter Your Name"
-                                onChangeText={(value: string) => (nameRef.current, value)}
+                                onChangeText={(value: string) => (nameRef.current= value)}
                                 icon={
                                     <Icons.UserIcon 
                                         size={verticalScale(26)} 
@@ -66,7 +71,7 @@ const Register = ()=> {
                             />
                             <Input
                                 placeholder="Enter Your Email"
-                                onChangeText={(value: string)=> (emailRef.current, value)}
+                                onChangeText={(value: string)=> (emailRef.current= value)}
                                 icon={
                                     <Icons.AtIcon 
                                         size={verticalScale(26)} 
@@ -76,7 +81,7 @@ const Register = ()=> {
                             />
                             <Input
                                 placeholder="Enter Your Password"
-                                onChangeText={(value: string)=> (passwordRef.current, value)}
+                                onChangeText={(value: string)=> (passwordRef.current= value)}
                                 icon={
                                     <Icons.LockIcon 
                                         size={verticalScale(26)} 
