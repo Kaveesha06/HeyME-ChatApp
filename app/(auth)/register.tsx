@@ -4,6 +4,7 @@ import Input from "@/components/Input";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
+import { useAuth } from "@/Contexts/authContext";
 import { verticalScale } from "@/utils/styling";
 import { useRouter } from "expo-router";
 import * as Icons from 'phosphor-react-native';
@@ -18,19 +19,29 @@ const Register = ()=> {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter()
 
+    const {signUp} = useAuth();
+
     const handleSubmit = async () => {
         // Use trimmed values to avoid accepting only whitespace
-        const name = String(nameRef.current || "").trim();
-        const email = String(emailRef.current || "").trim();
-        const password = String(passwordRef.current || "").trim();
+        // const name = String(nameRef.current || "").trim();
+        // const email = String(emailRef.current || "").trim();
+        // const password = String(passwordRef.current || "").trim();
 
-        if (!name || !email || !password) {
+        if (!nameRef.current || !emailRef.current || !passwordRef.current) {
             Alert.alert('Sign Up', "Please fill all the fields");
             return;
         }
 
-        Alert.alert('Sign Up', "Account created successfully");
-        //Good to go
+        try{
+
+            setIsLoading(true);
+            await signUp(emailRef.current, passwordRef.current, nameRef.current, "");
+
+        }catch(error:any){
+            Alert.alert("Registration error: ", error.message)
+        }finally{
+            setIsLoading(false);
+        }
     };
 
     return(
