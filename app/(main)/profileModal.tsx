@@ -32,22 +32,22 @@ const profileModal = () => {
 
     useEffect(() => {
         updateProfile(processUpdateProfile);
-        return()=>{
+        return () => {
             updateProfile(processUpdateProfile, true);
         }
     }, []);
 
-    const processUpdateProfile = (res:any)=>{
+    const processUpdateProfile = (res: any) => {
         console.log('got res: ', res);
         setLoading(false);
 
-        if(res.success){
+        if (res.success) {
             updateToken(res.data.token);
             router.back();
-        }else{
+        } else {
             Alert.alert('User', res.msg);
         }
-    
+
     }
 
     useEffect(() => {
@@ -58,44 +58,44 @@ const profileModal = () => {
         });
     }, [user]);
 
-    const onPickImage = async()=>{
+    const onPickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-    //   allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    });
+            mediaTypes: ['images'],
+            //   allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.5,
+        });
 
-    console.log(result);
+        console.log(result);
 
-    if (!result.canceled) {
-      setUserData({ ...userData, avatar: result.assets[0]});
-    }
-    }
+        if (!result.canceled) {
+            setUserData({ ...userData, avatar: result.assets[0] });
+        }
+    };
 
-    const handleLogout = async ()=>{
+    const handleLogout = async () => {
         router.back();
         await signOut();
     };
 
-    const showLogoutAlert=()=>{
-        Alert.alert("confirm", "Are you sure you want to logout?",[
+    const showLogoutAlert = () => {
+        Alert.alert("confirm", "Are you sure you want to logout?", [
             {
                 text: "Cansel",
-                onPress:()=> console.log('cansel logout'),
+                onPress: () => console.log('cansel logout'),
                 style: 'cancel'
             },
             {
                 text: "Logout",
-                onPress: ()=>handleLogout(),
+                onPress: () => handleLogout(),
                 style: 'destructive'
             }
         ])
     }
     const onSubmit = async () => {
-        let {name, avatar} = userData;
-        if(!name.trim()){
-            Alert.alert('User',"Please enter your name");
+        let { name, avatar } = userData;
+        if (!name.trim()) {
+            Alert.alert('User', "Please enter your name");
             return;
         }
 
@@ -104,13 +104,13 @@ const profileModal = () => {
             avatar
         }
 
-        if(avatar && avatar?.uri){
+        if (avatar && avatar?.uri) {
             setLoading(true);
             const res = await uploadFileToCloudinary(avatar, "profiles");
             console.log("result: ", res);
-            if(res.success){
+            if (res.success) {
                 data.avatar = res.data;
-            }else{
+            } else {
                 Alert.alert("User", res.msg);
                 setLoading(false);
                 return;
