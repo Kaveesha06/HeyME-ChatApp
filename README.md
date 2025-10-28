@@ -1,1 +1,5 @@
-ChatApp with React . TypeScript . Expo Route . 
+##ChatApp 
+. React 
+. TypeScript 
+. Expo Route 
+. Mongo DB
