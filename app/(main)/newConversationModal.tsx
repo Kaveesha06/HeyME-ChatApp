@@ -7,100 +7,175 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import Typo from "@/components/Typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useAuth } from "@/Contexts/authContext";
+import { uploadFileToCloudinary } from "@/services/imageService";
+import { getContacts, newConversation } from "@/socket/socketEvents";
 import { verticalScale } from "@/utils/styling";
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
-const newConversationModal = ()=>{
+const newConversationModal = ()=> {
 
-    const {isGroup} = useLocalSearchParams();
+    const { isGroup } = useLocalSearchParams();
     // console.log("isGroup: ", isGroup);
     const isGroupMode = isGroup == "1";
     const router = useRouter();
-    const [groupAvatar, setGroupAvatar] = useState<{uri: string} | null>(null);
+    const [contacts, setContacts] = useState([]);
+    const [groupAvatar, setGroupAvatar] = useState<{ uri: string } | null>(null);
     const [groupName, setGroupName] = useState("");
-    const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+    const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
+        []
+    );
 
     const [isLoading, setIsLoading] = useState(false);
 
-    const {user: currentUser} = useAuth();
+    const { user: currentUser } = useAuth();
+
+    useEffect(() => {
+        getContacts(processGetContacts);
+        newConversation(processNewConversation);
+        getContacts(null)
+
+        return () => {
+            getContacts(processGetContacts, true);
+            newConversation(processNewConversation, true);
+        };
+    }, []);
+
+    const processGetContacts = (res: any) => {
+        // console.log("got contacts: ", res);
+        if (res.success) {
+            setContacts(res.data);
+        }
+    };
+
+    const processNewConversation = (res: any) => {
+        // console.log("new conversation result: ", res);
+        // console.log("New conversation Result: ", res.data.participants);
+        setIsLoading(false);
+        if(res.success){
+            router.back();
+            router.push({
+                pathname: "/(main)/conversation",
+                params:{
+                    id: res.data._id,
+                    name: res.data.name,
+                    avatar: res.data.avatar,
+                    type: res.data.type,
+                    participants: JSON.stringify( res.data.participants),
+                }
+            })
+        }else{
+            console.log("Error fetching / creating conversation: ", res.msg);
+            Alert.alert("Error", res.msg);
+        }
+
+    };
 
     const onPickImage = async () => {
-            let result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
-                //   allowsEditing: true,
-                aspect: [4, 3],
-                quality: 0.5,
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            //   allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.5,
+        });
+
+        console.log(result);
+
+        if (!result.canceled) {
+            setGroupAvatar(result.assets[0]);
+        }
+    };
+
+    const toggleParticipant = (user: any) => {
+        setSelectedParticipants((prev: any) => {
+            if (prev.includes(user.id)) {
+                return prev.filter((id: string) => id != user.id);
+            }
+            return [...prev, user.id];
+        });
+    };
+
+    const onSelectUser = (user: any) => {
+        if (!currentUser) {
+            Alert.alert("Authentication", "Please login to start a conversation.");
+            return;
+        }
+
+        if (isGroupMode) {
+            toggleParticipant(user);
+        } else {
+            //direct conversation
+            newConversation({
+                type: "direct",
+                participants: [currentUser.id, user.id]
             });
-    
-            console.log(result);
-    
-            if (!result.canceled) {
-                setGroupAvatar(result.assets[0]);
-            }
-        };
 
-        const toggleParticipant = (user:any)=>{
-            setSelectedParticipants((prev:any)=>{
-                if(prev.includes(user.id)){
-                    return prev.filter((id: string)=> id != user.id);
-                }
-                return [...prev, user.id];
-            })
+        }
+    };
+
+    const createGroup = async () => {
+        if (!groupName.trim() || !currentUser || selectedParticipants.length < 2) {
+            return;
         }
 
-        const onSelectUser = (user:any)=>{
-            if(!currentUser){
-                Alert.alert("Authentication", "Please login to start a conversation.");
-                return;
+        setIsLoading(true);
+        try{
+            let avatar = null;
+            if(groupAvatar){
+                const uploadResult = await uploadFileToCloudinary(
+                    groupAvatar, "group-avatars"
+                );
+                if(uploadResult.success) avatar = uploadResult.data;
             }
 
-            if(isGroupMode){
-                toggleParticipant(user);
-            }else{
-                1//start direct conversation
-            }
-        };
+            newConversation({
+                type: 'group',
+                participants: [currentUser.id, ...selectedParticipants],
+                name: groupName,
+                avatar,
+            });
 
-        const createGroup = async ()=>{
-            if(!groupName.trim() || !currentUser || selectedParticipants.length < 2){
-                return;
-            }
+        }catch(error: any){
+            console.log("Error creating group: ", error);
+            Alert.alert("Error", error.message);
+        }finally{
+            setIsLoading(false);
         }
+    }
 
-    const contacts = [
-        {
-            id:"1",
-            name:"Jaime Lannister",
-            avatar: "https://i.pravatar.cc/150?img=11",
-        },
-        {
-            id:"2",
-            name:"Sansa Stark",
-            avatar: "https://i.pravatar.cc/150?img=12",
-        },
-        {
-            id:"3",
-            name:"Yara Greyjoy",
-            avatar: "https://i.pravatar.cc/150?img=13",
-        }
-    ];
+    // const contacts = [
+    //     {
+    //         id:"1",
+    //         name:"Jaime Lannister",
+    //         avatar: "https://i.pravatar.cc/150?img=11",
+    //     },
+    //     {
+    //         id:"2",
+    //         name:"Sansa Stark",
+    //         avatar: "https://i.pravatar.cc/150?img=12",
+    //     },
+    //     {
+    //         id:"3",
+    //         name:"Yara Greyjoy",
+    //         avatar: "https://i.pravatar.cc/150?img=13",
+    //     }
+    // ];
 
-    return(
+    return (
         <ScreenWrapper isModal={true}>
             <View style={styles.container}>
                 <Header
-                    title={isGroupMode? "New Group" : "Select User"}
-                    leftIcon={<BackButton color={colors.black}/>}
-                />    
+                    title={isGroupMode ? "New Group" : "Select User"}
+                    leftIcon={<BackButton color={colors.black} />}
+                />
                 {
-                    isGroupMode &&(
+                    isGroupMode && (
                         <View style={styles.groupInfoContainer}>
                             <View style={styles.avatarContainer}>
                                 <TouchableOpacity onPress={onPickImage}>
-                                    <Avatar uri={groupAvatar?.uri || null} size={90} isGroup={true}/>
+                                    <Avatar uri={groupAvatar?.uri || null} size={90} isGroup={true} />
                                 </TouchableOpacity>
                             </View>
 
@@ -117,19 +192,19 @@ const newConversationModal = ()=>{
                     )
                 }
 
-                <ScrollView 
+                <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.contactList}
                 >
                     {
-                        contacts.map((user:any, index)=>{
+                        contacts.map((user: any, index) => {
 
-                            const isSelected = selectedParticipants.includes(user.id); 
-                            return(
-                                <TouchableOpacity 
+                            const isSelected = selectedParticipants.includes(user.id);
+                            return (
+                                <TouchableOpacity
                                     key={index}
                                     style={[styles.contactRow, isSelected && styles.selectedContact]}
-                                    onPress={()=> onSelectUser(user)}
+                                    onPress={() => onSelectUser(user)}
                                 >
                                     <Avatar size={45} uri={user.avatar} />
                                     <Typo fontWeight={"500"}>{user.name}</Typo>
@@ -140,7 +215,7 @@ const newConversationModal = ()=>{
                                             </View>
                                         )
                                     }
-                                </TouchableOpacity>    
+                                </TouchableOpacity>
                             )
                         })
                     }
@@ -148,9 +223,9 @@ const newConversationModal = ()=>{
                 </ScrollView>
 
                 {
-                    isGroupMode && selectedParticipants.length>=2 && (
+                    isGroupMode && selectedParticipants.length >= 2 && (
                         <View style={styles.createGroupButton}>
-                            <Button 
+                            <Button
                                 onPress={createGroup}
                                 disabled={!groupName.trim()}
                                 loading={isLoading}
@@ -158,8 +233,8 @@ const newConversationModal = ()=>{
                                 <Typo fontWeight={"bold"} size={17}>
                                     Create Group
                                 </Typo>
-                            </Button>    
-                        </View>   
+                            </Button>
+                        </View>
                     )
                 }
 
@@ -171,57 +246,57 @@ const newConversationModal = ()=>{
 export default newConversationModal;
 
 const styles = StyleSheet.create({
-    createGroupButton:{
-        position:'absolute',
-        bottom:0,
-        left:0,
-        right:0,
+    createGroupButton: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: spacingX._15,
         backgroundColor: colors.white,
         borderTopWidth: 1,
         borderTopColor: colors.neutral200,
     },
-    checked:{
+    checked: {
         backgroundColor: colors.primary,
     },
-    checkbox:{
+    checkbox: {
         width: 24,
         height: 25,
         borderRadius: 5,
         borderWidth: 3,
         borderColor: colors.primary,
     },
-    sectionIndicator:{
+    sectionIndicator: {
         marginLeft: "auto",
         marginRight: spacingX._10,
     },
-    contactList:{
+    contactList: {
         gap: spacingY._12,
         marginTop: spacingY._10,
         paddingTop: spacingY._10,
         paddingBottom: verticalScale(150),
     },
-    selectedContact:{
+    selectedContact: {
         backgroundColor: colors.neutral200,
         borderRadius: radius._10,
     },
-    contactRow:{
-        flexDirection:"row",
-        alignItems:"center",
+    contactRow: {
+        flexDirection: "row",
+        alignItems: "center",
         gap: spacingX._10,
         paddingVertical: spacingY._5,
     },
-    groupNameContainer:{
-        width:"100%",
+    groupNameContainer: {
+        width: "100%",
     },
-    avatarContainer:{
+    avatarContainer: {
         marginBottom: spacingY._10,
     },
-    groupInfoContainer:{
-        alignItems:"center",
+    groupInfoContainer: {
+        alignItems: "center",
         marginTop: spacingY._10,
     },
-    container:{
+    container: {
         marginHorizontal: spacingX._15,
         flex: 1,
     }
