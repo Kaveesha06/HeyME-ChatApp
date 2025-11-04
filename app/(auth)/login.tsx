@@ -11,53 +11,53 @@ import * as Icons from 'phosphor-react-native';
 import React, { useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
-const Login = ()=> {
+const Login = () => {
 
     const emailRef = useRef("");
     const passwordRef = useRef("");
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter()
+    const router = useRouter();
 
-    const {signIn} = useAuth;
+    const { signIn } = useAuth();
 
-    const handleSubmit = async()=>{
-        if(!emailRef.current || !passwordRef.current ){
+    const handleSubmit = async () => {
+        if (!emailRef.current || !passwordRef.current) {
             Alert.alert('Login', "Please fill all the fields");
             return;
         }
 
-        try{
-        
-                    setIsLoading(true);
-                    await signIn(emailRef.current, passwordRef.current);
-        
-                }catch(error:any){
-                    Alert.alert("Login error: ", error.message)
-                }finally{
-                    setIsLoading(false);
-                }
-        
+        try {
+
+            setIsLoading(true);
+            await signIn(emailRef.current, passwordRef.current);
+
+        } catch (error: any) {
+            Alert.alert("Login error: ", error.message);
+        } finally {
+            setIsLoading(false);
+        }
+
     };
 
-    return(
-        <KeyboardAvoidingView 
-            style={{flex:1}} 
-            behavior={Platform.OS== "android" ? "padding" : "height"}
+    return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS == "android" ? "padding" : "height"}
         >
             <ScreenWrapper showPattern={true}>
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <BackButton iconSize={28}/>
+                        <BackButton iconSize={28} />
                         <Typo size={17} color={colors.white}>
                             Forgot Password?
                         </Typo>
                     </View>
                     <View style={styles.content}>
-                        <ScrollView 
-                            contentContainerStyle={styles.form} 
+                        <ScrollView
+                            contentContainerStyle={styles.form}
                             showsVerticalScrollIndicator={false}
                         >
-                            <View style={{gap: spacingY._10, marginBottom: spacingY._15}}>
+                            <View style={{ gap: spacingY._10, marginBottom: spacingY._15 }}>
                                 <Typo size={28} fontWeight={"600"}>
                                     Welcome Back!!
                                 </Typo>
@@ -65,37 +65,37 @@ const Login = ()=> {
                                     We are happy to see you again!
                                 </Typo>
                             </View>
-                            
+
                             <Input
                                 placeholder="Enter Your Email"
-                                onChangeText={(value: string)=> (emailRef.current, value)}
+                                onChangeText={(value: string) => (emailRef.current= value)}
                                 icon={
-                                    <Icons.AtIcon 
-                                        size={verticalScale(26)} 
-                                        color={colors.neutral600} 
+                                    <Icons.AtIcon
+                                        size={verticalScale(26)}
+                                        color={colors.neutral600}
                                     />
                                 }
                             />
                             <Input
                                 placeholder="Enter Your Password"
-                                onChangeText={(value: string)=> (passwordRef.current, value)}
+                                onChangeText={(value: string) => (passwordRef.current= value)}
                                 icon={
-                                    <Icons.LockIcon 
-                                        size={verticalScale(26)} 
-                                        color={colors.neutral600} 
+                                    <Icons.LockIcon
+                                        size={verticalScale(26)}
+                                        color={colors.neutral600}
                                     />
                                 }
                             />
 
-                            <View style={{marginTop: spacingY._25, gap: spacingY._15}}>
+                            <View style={{ marginTop: spacingY._25, gap: spacingY._15 }}>
                                 <Button loading={isLoading} onPress={handleSubmit}>
                                     <Typo fontWeight={"bold"} color={colors.black} size={20}>
-                                         Login 
+                                        Login
                                     </Typo>
                                 </Button>
                                 <View style={styles.footer}>
                                     <Typo>Don't have an account ?</Typo>
-                                    <Pressable onPress={()=> router.push("/(auth)/register")}>
+                                    <Pressable onPress={() => router.push("/(auth)/register")}>
                                         <Typo fontWeight={"bold"} color={colors.primaryDark}>
                                             Sign Up
                                         </Typo>
@@ -106,23 +106,23 @@ const Login = ()=> {
                         </ScrollView>
                     </View>
                 </View>
-            
-        </ScreenWrapper>
+
+            </ScreenWrapper>
         </KeyboardAvoidingView>
-        
+
     );
 };
 
 export default Login;
 
 const styles = StyleSheet.create({
-    container:{
-        flex:1,
+    container: {
+        flex: 1,
         justifyContent: "space-between",
         // marginHorizontal: spacingX._20,
         // gap: spacingY._30,
     },
-    header:{
+    header: {
         paddingHorizontal: spacingX._20,
         paddingTop: spacingY._15,
         paddingBottom: spacingY._25,
@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
     },
-    content:{
-        flex:1,
+    content: {
+        flex: 1,
         backgroundColor: colors.white,
         borderTopLeftRadius: radius._50,
         borderTopRightRadius: radius._50,
@@ -139,11 +139,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacingX._20,
         paddingVertical: spacingY._20,
     },
-    form:{
+    form: {
         gap: spacingY._15,
         marginTop: spacingY._20,
     },
-    footer:{
+    footer: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",

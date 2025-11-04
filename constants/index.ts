@@ -1,5 +1,5 @@
 
-export const API_URL = 'http://172.22.248.193:3000';  //10.74.241.193 10.22.233.193 10.22.233.193, 172.22.248.193
+export const API_URL = 'http://10.143.136.193:3000'; //10.175.3.193
 
 // export const API_URL = Platform.OS == 'android'? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 
