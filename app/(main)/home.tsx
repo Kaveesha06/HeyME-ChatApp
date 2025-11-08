@@ -4,10 +4,12 @@ import ScreenWrapper from "@/components/ScreenWrapper"
 import Typo from "@/components/Typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/Contexts/authContext"
+import { getConversations, newConversation } from "@/socket/socketEvents"
+import { ConversationProps, ResponseProps } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native"
 
 const Home = ()=>{
@@ -16,6 +18,31 @@ const Home = ()=>{
 
     const [selectedTab, setSelectedTab] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [conversations, setConversations] = useState<ConversationProps[]>([])
+
+    useEffect(()=>{
+        getConversations(processConversations);
+        newConversation(newConversationHandler);
+        getConversations(null);
+        return()=>{
+            getConversations(processConversations, true);
+            newConversation(newConversationHandler, true);
+        }
+    },[]);
+
+    const processConversations = (res: ResponseProps)=>{
+        // console.log('res: ', res);
+        if(res.success){
+            setConversations(res.data);
+        }
+    };
+
+    const newConversationHandler = (res: ResponseProps)=>{
+        if(res.success && res.data?.isNew){
+            setConversations((prev)=> [...prev, res.data]);
+        }
+    };
+
     // console.log("user: ", user);
 
     // useEffect(()=>{
@@ -35,56 +62,56 @@ const Home = ()=>{
         await signOut();
     };
 
-    const conversations = [
-        {
-            name: "Arisu",
-            type: "direct",
-            lastMessage:{
-                senderName:"Arisu",
-                content:"We done with Diomend, How about U?",
-                createdAt: "2025-10-01T18:30:00Z",
-            },
-        },
-        {
-            name: "Michelle",
-            type: "direct",
-            lastMessage:{
-                senderName:"Michelle",
-                // attachement:{image:'url'},
-                content:"Tonight BREACKOUT!!!",
-                createdAt: "2025-10-04T15:05:00Z",
-            },   
-        },
-        {
-            name: "Project Sona",
-            type: "group",
-            lastMessage:{
-                senderName:"Mahone",
-                content:"How about TBag",
-                createdAt: "2025-10-20T15:05:00Z",
-            },   
-        },
-        {
-            name: "La Casa De Papel",
-            type: "group",
-            lastMessage:{
-                senderName:"Nirobi",
-                content:"Shut the Fuck up Tokyo",
-                createdAt: "2025-10-11T15:05:00Z",
-            },   
-        },
-    ]
+    // const conversations = [
+    //     {
+    //         name: "Arisu",
+    //         type: "direct",
+    //         lastMessage:{
+    //             senderName:"Arisu",
+    //             content:"We done with Diomend, How about U?",
+    //             createdAt: "2025-10-01T18:30:00Z",
+    //         },
+    //     },
+    //     {
+    //         name: "Michelle",
+    //         type: "direct",
+    //         lastMessage:{
+    //             senderName:"Michelle",
+    //             // attachement:{image:'url'},
+    //             content:"Tonight BREACKOUT!!!",
+    //             createdAt: "2025-10-04T15:05:00Z",
+    //         },   
+    //     },
+    //     {
+    //         name: "Project Sona",
+    //         type: "group",
+    //         lastMessage:{
+    //             senderName:"Mahone",
+    //             content:"How about TBag",
+    //             createdAt: "2025-10-20T15:05:00Z",
+    //         },   
+    //     },
+    //     {
+    //         name: "La Casa De Papel",
+    //         type: "group",
+    //         lastMessage:{
+    //             senderName:"Nirobi",
+    //             content:"Shut the Fuck up Tokyo",
+    //             createdAt: "2025-10-11T15:05:00Z",
+    //         },   
+    //     },
+    // ]
 
     let directConversations = conversations
-    .filter((item:any)=> item.type == "direct")
-    .sort((a: any, b: any)=>{
+    .filter((item:ConversationProps)=> item.type == "direct")
+    .sort((a: ConversationProps, b: ConversationProps)=>{
         const aDate = a?.lastMessage?.createdAt || a.createdAt;
         const bDate = b?.lastMessage?.createdAt || b.createdAt;
         return new Date(bDate).getTime()- new Date(aDate).getTime();
     });
     let groupConversations = conversations
-    .filter((item:any)=> item.type == "group")
-    .sort((a: any, b: any)=>{
+    .filter((item:ConversationProps)=> item.type == "group")
+    .sort((a: ConversationProps, b: ConversationProps)=>{
         const aDate = a?.lastMessage?.createdAt || a.createdAt;
         const bDate = b?.lastMessage?.createdAt || b.createdAt;
         return new Date(bDate).getTime()- new Date(aDate).getTime();
@@ -149,7 +176,7 @@ const Home = ()=>{
 
                         <View style={styles.conversationList}>
                             {
-                                selectedTab ==0 && directConversations.map((item: any, index)=>{
+                                selectedTab ==0 && directConversations.map((item: ConversationProps, index)=>{
                                     return(
                                         <ConversationItem
                                             item={item}
@@ -161,7 +188,7 @@ const Home = ()=>{
                                 })
                             }
                             {
-                                selectedTab ==1 && groupConversations.map((item: any, index)=>{
+                                selectedTab ==1 && groupConversations.map((item: ConversationProps, index)=>{
                                     return(
                                         <ConversationItem
                                             item = {item}
