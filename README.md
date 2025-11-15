@@ -9,9 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Kaveesha06/HeyME-ChatApp">
-    <img src="https://img.shields.io/github/license/Kaveesha06/HeyME-ChatApp?style=for-the-badge" alt="License">
-  </a>
+  
   <img src="https://img.shields.io/github/languages/top/Kaveesha06/HeyME-ChatApp?style=for-the-badge" alt="Language">
   <img src="https://img.shields.io/github/last-commit/Kaveesha06/HeyME-ChatApp?style=for-the-badge" alt="Last Commit">
 </p>
