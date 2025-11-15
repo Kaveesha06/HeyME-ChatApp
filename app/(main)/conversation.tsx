@@ -1,6 +1,7 @@
 import Avatar from "@/components/Avatar";
 import BackButton from "@/components/BackButton";
 import Header from "@/components/Header";
+import Input from "@/components/Input";
 import Loading from "@/components/Loading";
 import MessageItem from "@/components/MessageItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -8,15 +9,17 @@ import Typo from "@/components/Typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useAuth } from "@/Contexts/authContext";
 import { uploadFileToCloudinary } from "@/services/imageService";
+import { getMessages, newMessage } from "@/socket/socketEvents";
+import { MessageProps, ResponseProps } from "@/types";
 import { scale, verticalScale } from "@/utils/styling";
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from "expo-router";
 import * as Icons from "phosphor-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
 
-const Conversation = () => {
+const Conversation = ()=> {
 
     const { user: currentUser } = useAuth();
     const {
@@ -28,7 +31,10 @@ const Conversation = () => {
     } = useLocalSearchParams();
     const [message, setMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<{ uri: string } | null>(null);
+
     const [loading, setLoading] = useState(false);
+    const [messages, setMessages] = useState<MessageProps[]>([]);
+
     const participants = JSON.parse(stringifiedParticipants as string);
 
     let conversationAvatar = avatar;
@@ -44,13 +50,42 @@ const Conversation = () => {
 
     // console.log("got conversation data: ", data);
 
-    const dummyMessages = [
-        {
+    useEffect(()=>{
+        newMessage(newMessageHandler);
+        getMessages(messagesHandler);
 
+        getMessages({conversationId});
+
+        return ()=>{
+            newMessage(newMessageHandler, true);
+            getMessages(messagesHandler, true);
         }
-    ]
+    },[]);
 
-    const onPickFile = async () => {
+    const newMessageHandler = (res: ResponseProps)=>{
+        setLoading(false);
+        // console.log("New message received: ", res);
+
+        if(res.success){
+            if(res.data.conversationId == conversationId){
+                setMessages((prev)=> [res.data as MessageProps, ...prev]);
+            }
+        }else{
+            Alert.alert("Error", res.msg);
+        }
+    }
+
+    const messagesHandler = (res: ResponseProps)=>{
+        if(res.success) setMessages(res.data);
+    };
+
+    // const dummyMessages = [
+    //     {
+
+    //     }
+    // ]
+
+    const onPickFile = async ()=> {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             //   allowsEditing: true,
@@ -87,8 +122,22 @@ const Conversation = () => {
 
             }
 
-            console.log("attachement: ", attachement);
+            // console.log("attachement: ", attachement);
 
+            newMessage({
+                conversationId,
+                sender: {
+                    id: currentUser?.id,
+                    name: currentUser.name,
+                    avatar: currentUser.avatar,
+                },
+                content: message.trim(),
+                attachement,
+            });
+
+            setMessage("");
+            setSelectedFile(null);
+            
         }catch(error){
             console.log("Error sending message: ",error);
             Alert.alert("Error", "Failed to send message");
@@ -129,7 +178,7 @@ const Conversation = () => {
                 {/*messages*/}
                 <View style={styles.content}>
                     <FlatList
-                        data={dummyMessages}
+                        data={messages}
                         inverted={true}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.messagesContent}
